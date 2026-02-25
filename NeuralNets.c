@@ -112,9 +112,14 @@ void feedforward_1layer(double sample[INPUTS], double (*sigmoid)(double input), 
   *  calculate neuron activation.
   * 
   *  Inputs:
-  *    sample -      The input sample (see above for a description)
-  *    sigmoid -     The sigmoid function being used
-  *    weights_op -  Array of current network weights
+  * Inputs:
+  *   sample  -  Array with the pixel values for the input digit - in this case a 28x28 image (784 pixels)
+  *              with values in [0-255], plus one bias term (last entry in the array) which is always 1
+  *   sigmoid -  The sigmoid function being used, which will be either the logistic function or the hyperbolic
+  *              tangent. You have to implement the logistic function, but math.h provides tanh() already
+  *   weights_io - Array of weights connecting inputs to output neurons, weights[i][j] is the weight from input
+  *                i to output neuron j. This array has a size of 785x10.
+  *
   *    activations - Array where your function will store the resulting activation for each output neuron
   * 
   *  Return values:
@@ -122,12 +127,38 @@ void feedforward_1layer(double sample[INPUTS], double (*sigmoid)(double input), 
   * 
   *  NOTE - You must *scale* the input to the sigmoid function using the SIGMOID_SCALE value. Otherwise
   *         the neurons will be totally saturated and learning won't happen.
+  * Game Plan for feedforward_1layer:
+
+    Loop through each Output Neuron (there are 10).
+
+    Initialize a sum to 0 for the current neuron.
+
+    Loop through all Inputs (785 of them).
+
+        Multiply sample[i] by weights_io[i][j].
+
+        Add it to your sum.
+
+    Apply Scaling: Multiply that sum by SIGMOID_SCALE.
+
+    Activate: Pass that scaled sum into the sigmoid function pointer.
+
+    Store: Put the result in the activations[j] array.
   */ 
  
   /*******************************************************************************************************
    * TO DO: Complete this function. You will need to implement logistic() in order for this to work
    *        with a logistic activation function.
    ******************************************************************************************************/
+  for (int i=0;i<OUTPUTS;i++)
+  {
+    double neuron_sum_activation=0;
+    for(int j=0;j<INPUTS;j++)
+    {
+      neuron_sum_activation+=sample[j]*weights_io[j][i];
+    }
+    activations[i]=sigmoid(neuron_sum_activation*SIGMOID_SCALE);
+  }
   
   return;
 }
