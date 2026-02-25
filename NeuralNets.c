@@ -100,8 +100,10 @@ int classify_1layer(double sample[INPUTS],int label,double (*sigmoid)(double inp
   *          You will need to complete feedforward_1layer(), and logistic() in order to
   *          be able to complete this function.
   ***********************************************************************************************************/
-   
-  return 0;     // Stub so things compile and run
+ double activations[OUTPUTS];
+ feedforward_1layer(sample,sigmoid,weights_io,activations);
+ int max_index= max_activation(activations);
+ return max_index;   
 }
 
 void feedforward_1layer(double sample[INPUTS], double (*sigmoid)(double input), double weights_io[INPUTS][OUTPUTS], double activations[OUTPUTS])
