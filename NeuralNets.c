@@ -72,8 +72,18 @@ int train_1layer_net(double sample[INPUTS], int label, double (*sigmoid)(double 
    *          You will need to complete feedforward_1layer(), backprop_1layer(), and logistic() in order to
    *          be able to complete this function.
    ***********************************************************************************************************/
+ double activations[OUTPUTS];
 
-  return 0; // Stub so things compile and run...
+  // 1. Feedforward Pass: Calculate what the network thinks right now
+  feedforward_1layer(sample, sigmoid, weights_io, activations);
+
+  // 2. Backpropagation: Update weights based on the correct label
+  // This is where the actual "learning" happens
+  backprop_1layer(sample, activations, sigmoid, label, weights_io);
+
+  // 3. Return the prediction: What was the network's guess for this sample?
+  // We use max_activation on the activations we just calculated.
+  return max_activation(activations);
 }
 
 int classify_1layer(double sample[INPUTS], int label, double (*sigmoid)(double input), double weights_io[INPUTS][OUTPUTS])
@@ -219,6 +229,29 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
   for (int j = 0; j < OUTPUTS; j++)
   {
     error[j] = target_values[j] - activations[j]; // Error for neuron j
+  }
+  // ... your existing code for target_values and error ...
+
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    // 1. Calculate the derivative (gradient) based on the sigmoid type
+    double derivative;
+    if (sigmoid_zero_output == 0.5) // Logistic
+    {
+      derivative = activations[j] * (1.0 - activations[j]);
+    }
+    else // Tanh
+    {
+      derivative = (1.0 - (activations[j] * activations[j]));
+    }
+
+    // 2. Update all weights connecting to this neuron
+    for (int i = 0; i < INPUTS; i++)
+    {
+      // Weight change = Learning Rate * Error * Derivative * Input
+      double delta_w = ALPHA * error[j] * derivative * sample[i];
+      weights_io[i][j] += delta_w;
+    }
   }
 
   return;
