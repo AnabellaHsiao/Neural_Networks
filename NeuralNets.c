@@ -198,15 +198,27 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
    *        using. Then use the procedure discussed in lecture to compute weight updates.
    * ************************************************************************************************/
 
-  // DETERMINE TARGET VALUES FOR EACH NEURON
-
-  // COMPUTE ERROR AND WEIGHT UPDATES FOR EACH NEURON.
-  // Cost function for a single input is errj(Ii) = (Tj,i-Oj,i)^2, where T is the target value for neuron j and sample i, and O is the output of neuron j for sample i.)
-  double cost = 0.0;
+  // DETERMINE TARGET VALUES FOR EACH NEURON (depends on sigmoid function, 1 for correct label, 0 for others if logistic, 1 for correct label, -1 for others if hyperbolic tangent)
+  // You can determine which sigmoid is being used by checking the output of the sigmoid function for 0
+  double sigmoid_zero_output = sigmoid(0); // if this is 0.5, we're using logistic, if it's 0, we're using hyperbolic tangent
+  double target_values[OUTPUTS];
   for (int j = 0; j < OUTPUTS; j++)
   {
-    double target = (j == label) ? 1.0 : 0.0; // Target is 1 for the correct label, 0 for others
-    double error = target - activations[j];   // Error for neuron j
+    if (sigmoid_zero_output == 0.5) // Logistic function
+    {
+      target_values[j] = (j == label) ? 1.0 : 0.0;
+    }
+    else // Hyperbolic tangent function
+    {
+      target_values[j] = (j == label) ? 1.0 : -1.0;
+    }
+  }
+  // COMPUTE ERROR AND WEIGHT UPDATES FOR EACH NEURON.
+  // Cost function for a single input is errj(Ii) = (Tj,i-Oj,i)^2, where T is the target value for neuron j and sample i, and O is the output of neuron j for sample i.)
+  double error[OUTPUTS];
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    error[j] = target_values[j] - activations[j]; // Error for neuron j
   }
 
   return;
