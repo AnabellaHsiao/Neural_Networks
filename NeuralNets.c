@@ -72,7 +72,7 @@ int train_1layer_net(double sample[INPUTS], int label, double (*sigmoid)(double 
    *          You will need to complete feedforward_1layer(), backprop_1layer(), and logistic() in order to
    *          be able to complete this function.
    ***********************************************************************************************************/
- double activations[OUTPUTS];
+  double activations[OUTPUTS];
 
   // 1. Feedforward Pass: Calculate what the network thinks right now
   feedforward_1layer(sample, sigmoid, weights_io, activations);
@@ -238,11 +238,11 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
     double derivative;
     if (sigmoid_zero_output == 0.5) // Logistic
     {
-      derivative = activations[j] * (1.0 - activations[j]);
+      derivative = sigmoid(activations[j]) * (1.0 - sigmoid(activations[j]));
     }
     else // Tanh
     {
-      derivative = (1.0 - (activations[j] * activations[j]));
+      derivative = (1.0 - sigmoid(activations[j]) * sigmoid(activations[j]));
     }
 
     // 2. Update all weights connecting to this neuron
@@ -292,7 +292,7 @@ int train_2layer_net(double sample[INPUTS], int label, double (*sigmoid)(double 
    *          be able to complete this function.
    ***********************************************************************************************************/
 
-  return 0; // Stub so things compile...
+  return 0;
 }
 
 int classify_2layer(double sample[INPUTS], int label, double (*sigmoid)(double input), int units, double weights_ih[INPUTS][MAX_HIDDEN], double weights_ho[MAX_HIDDEN][OUTPUTS])
@@ -363,6 +363,50 @@ void feedforward_2layer(double sample[INPUTS], double (*sigmoid)(double input), 
    *                  SIGMOID_SCALE*(MAX_HIDDEN/units).
    **************************************************************************************************/
 
+  //  Loop through each Output Neuron (there are 10).
+
+  //  Initialize a sum to 0 for the current neuron.
+
+  //  Loop through all Inputs (785 of them).
+
+  //      Multiply sample[i] by weights_io[i][j].
+
+  //      Add it to your sum.
+
+  //  Apply Scaling: Multiply that sum by SIGMOID_SCALE.
+
+  //  Activate: Pass that scaled sum into the sigmoid function pointer.
+
+  //  Store: Put the result in the activations[j] array.
+
+  for (int i = 0; i < units; i++)
+  {
+    double neuron_sum_activation = 0;
+    for (int j = 0; j < INPUTS; j++)
+    {
+      neuron_sum_activation += sample[j] * weights_ih[j][i];
+    }
+    // Apply Scaling for hidden layer
+    neuron_sum_activation *= SIGMOID_SCALE;
+    // Activate hidden layer neuron
+    neuron_sum_activation = sigmoid(neuron_sum_activation);
+    // Store hidden layer activation
+    h_activations[i] = neuron_sum_activation;
+  }
+  for (int i = 0; i < OUTPUTS; i++)
+  {
+    double neuron_sum_activation = 0;
+    for (int j = 0; j < units; j++)
+    {
+      neuron_sum_activation += h_activations[j] * weights_ho[j][i];
+    }
+    // Apply Scaling for output layer
+    neuron_sum_activation *= SIGMOID_SCALE * ((double)MAX_HIDDEN / (double)units);
+    // Activate output layer neuron
+    neuron_sum_activation = sigmoid(neuron_sum_activation);
+    // Store output layer activation
+    activations[i] = neuron_sum_activation;
+  }
   return;
 }
 
