@@ -236,7 +236,7 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
   {
     // 1. Calculate the derivative (gradient) based on the sigmoid type
     double derivative;
-    if (sigmoid_zero_output == 0.5) // Logistic
+    if(sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
     {
       derivative = sigmoid(activations[j]) * (1.0 - sigmoid(activations[j]));
     }
@@ -252,6 +252,7 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
       double delta_w = ALPHA * error[j] * derivative * sample[i];
       weights_io[i][j] += delta_w;
     }
+    
   }
 
   return;
@@ -291,8 +292,18 @@ int train_2layer_net(double sample[INPUTS], int label, double (*sigmoid)(double 
    *          You will need to complete feedforward_2layer(), backprop_2layer(), and logistic() in order to
    *          be able to complete this function.
    ***********************************************************************************************************/
+   double activations[OUTPUTS];
+   double h_activations[MAX_HIDDEN];
 
-  return 0;
+  // 1. Feedforward Pass: Calculate what the network thinks right now
+  feedforward_2layer(sample, sigmoid, weights_ih, weights_ho, h_activations, activations, units);
+
+  // 2. Backpropagation: Update weights based on the correct label
+  // This is where the actual "learning" happens
+  backprop_2layer(sample, h_activations, activations, sigmoid, label, weights_ih, weights_ho, units);
+  // 3. Return the prediction: What was the network's guess for this sample?
+  // We use max_activation on the activations we just calculated.
+  return max_activation(activations);
 }
 
 int classify_2layer(double sample[INPUTS], int label, double (*sigmoid)(double input), int units, double weights_ih[INPUTS][MAX_HIDDEN], double weights_ho[MAX_HIDDEN][OUTPUTS])
@@ -325,8 +336,12 @@ int classify_2layer(double sample[INPUTS], int label, double (*sigmoid)(double i
    *          You will need to complete feedforward_2layer(), and logistic() in order to
    *          be able to complete this function.
    ***********************************************************************************************************/
+  double activations[OUTPUTS];
+  double h_activations[MAX_HIDDEN];
+  feedforward_2layer(sample, sigmoid, weights_ih, weights_ho, h_activations, activations, units);
+  int max_index = max_activation(activations);
+  return max_index;
 
-  return 0; // Stub so things compile and run...
 }
 
 void feedforward_2layer(double sample[INPUTS], double (*sigmoid)(double input), double weights_ih[INPUTS][MAX_HIDDEN], double weights_ho[MAX_HIDDEN][OUTPUTS], double h_activations[MAX_HIDDEN], double activations[OUTPUTS], int units)
@@ -443,7 +458,67 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
    *        the network. You will need to find a way to figure out which sigmoid function you're
    *        using. Then use the procedure discussed in lecture to compute weight updates.
    * ************************************************************************************************/
-  return;
+
+  double delta_o[OUTPUTS];
+  double delta_h[MAX_HIDDEN];
+  double sigmoid_zero = sigmoid(0); // 0.5 for logistic, 0.0 for tanh
+
+  // --- STEP 1: Calculate Output Layer Deltas ---
+  double sigmoid_zero_output = sigmoid(0); // if this is 0.5, we're using logistic, if it's 0, we're using hyperbolic tangent
+  double target_values[OUTPUTS];
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    if(sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
+    {
+      target_values[j] = (j == label) ? 1.0 : 0.0;
+    }
+    else // Hyperbolic tangent function
+    {
+      target_values[j] = (j == label) ? 1.0 : -1.0;
+    }
+  }
+  // COMPUTE ERROR AND WEIGHT UPDATES FOR EACH NEURON.
+  // Cost function for a single input is errj(Ii) = (Tj,i-Oj,i)^2, where T is the target value for neuron j and sample i, and O is the output of neuron j for sample i.)
+  double error[OUTPUTS];
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    error[j] = target_values[j] - activations[j]; // Error for neuron j
+  }
+
+  // --- STEP 2: Calculate Hidden Layer Deltas ---
+  for (int i = 0; i < units; i++)
+  {
+    double error_sum = 0;
+    for (int j = 0; j < OUTPUTS; j++)
+    {
+      // We use the OLD weights to see how much this hidden unit contributed to the error
+      error_sum += delta_o[j] * weights_ho[i][j];
+    }
+    double deriv_h = (sigmoid_zero == 0.0) ? (1.0 - h_activations[i] * h_activations[i]) : (h_activations[i] * (1.0 - h_activations[i]));
+    
+    delta_h[i] = error_sum * deriv_h;
+  }
+
+  // --- STEP 3: Update Weights (Hidden to Output) ---
+  for (int i = 0; i < units; i++)
+  {
+    for (int j = 0; j < OUTPUTS; j++)
+    {
+      // Input here is the hidden activation
+      weights_ho[i][j] += ALPHA * delta_o[j] * h_activations[i];
+    }
+  }
+
+  // --- STEP 4: Update Weights (Input to Hidden) ---
+  for (int i = 0; i < INPUTS; i++)
+  {
+    for (int j = 0; j < units; j++)
+    {
+      // Input here is the raw pixel (sample)
+      weights_ih[i][j] += ALPHA * delta_h[j] * sample[i];
+    }
+  }
+
 }
 
 double logistic(double input)
