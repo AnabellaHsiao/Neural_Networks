@@ -478,6 +478,7 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
   // COMPUTE ERROR AND WEIGHT UPDATES FOR EACH NEURON.
   // Cost function for a single input is errj(Ii) = (Tj,i-Oj,i)^2, where T is the target value for neuron j and sample i, and O is the output of neuron j for sample i.)
   double error[OUTPUTS];
+  double out_scale = SIGMOID_SCALE * ((double)MAX_HIDDEN / (double)units);
   for (int j = 0; j < OUTPUTS; j++)
   {
     error[j] = target_values[j] - activations[j]; // Error for neuron j
@@ -494,7 +495,7 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
     {
       derivative = (1.0 - activations[j] * activations[j]);
     }
-    delta_o[j] = error[j] * derivative;
+    delta_o[j] = error[j] * derivative* out_scale; // Output layer delta
   }
   // Neow i compute the delta for hidden layer
   for (int i = 0; i < units; i++)
@@ -513,7 +514,7 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
     {
       derivative = (1.0 - h_activations[i] * h_activations[i]);
     }
-    delta_h[i] = error_sum * derivative;
+    delta_h[i] = error_sum * derivative* SIGMOID_SCALE; // Hidden layer delta
   }
   // Now I have the deltas for both layers, I can update the weights
   // Update weights from hidden to output layer
