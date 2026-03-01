@@ -392,20 +392,6 @@ void feedforward_2layer(double sample[INPUTS], double (*sigmoid)(double input), 
 
   //  Store: Put the result in the activations[j] array.
 
-  for (int i = 0; i < units; i++)
-  {
-    double neuron_sum_activation = 0;
-    for (int j = 0; j < INPUTS; j++)
-    {
-      neuron_sum_activation += sample[j] * weights_ih[j][i];
-    }
-    // Apply Scaling for hidden layer
-    neuron_sum_activation *= SIGMOID_SCALE;
-    // Activate hidden layer neuron
-    neuron_sum_activation = sigmoid(neuron_sum_activation);
-    // Store hidden layer activation
-    h_activations[i] = neuron_sum_activation;
-  }
   for (int i = 0; i < OUTPUTS; i++)
   {
     double neuron_sum_activation = 0;
@@ -420,6 +406,21 @@ void feedforward_2layer(double sample[INPUTS], double (*sigmoid)(double input), 
     // Store output layer activation
     activations[i] = neuron_sum_activation;
   }
+  for (int i = 0; i < units; i++)
+  {
+    double neuron_sum_activation = 0;
+    for (int j = 0; j < INPUTS; j++)
+    {
+      neuron_sum_activation += sample[j] * weights_ih[j][i];
+    }
+    // Apply Scaling for hidden layer
+    neuron_sum_activation *= SIGMOID_SCALE;
+    // Activate hidden layer neuron
+    neuron_sum_activation = sigmoid(neuron_sum_activation);
+    // Store hidden layer activation
+    h_activations[i] = neuron_sum_activation;
+  }
+  
   return;
 }
 
