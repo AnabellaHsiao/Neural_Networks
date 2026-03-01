@@ -236,13 +236,13 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
   {
     // 1. Calculate the derivative (gradient) based on the sigmoid type
     double derivative;
-    if(sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
+    if (sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
     {
-      derivative = sigmoid(activations[j]) * (1.0 - sigmoid(activations[j]));
+      derivative = activations[j] * (1.0 - activations[j]);
     }
     else // Tanh
     {
-      derivative = (1.0 - sigmoid(activations[j]) * sigmoid(activations[j]));
+      derivative = (1.0 - (activations[j] * activations[j]));
     }
 
     // 2. Update all weights connecting to this neuron
@@ -252,7 +252,6 @@ void backprop_1layer(double sample[INPUTS], double activations[OUTPUTS], double 
       double delta_w = ALPHA * error[j] * derivative * sample[i];
       weights_io[i][j] += delta_w;
     }
-    
   }
 
   return;
@@ -292,8 +291,8 @@ int train_2layer_net(double sample[INPUTS], int label, double (*sigmoid)(double 
    *          You will need to complete feedforward_2layer(), backprop_2layer(), and logistic() in order to
    *          be able to complete this function.
    ***********************************************************************************************************/
-   double activations[OUTPUTS];
-   double h_activations[MAX_HIDDEN];
+  double activations[OUTPUTS];
+  double h_activations[MAX_HIDDEN];
 
   // 1. Feedforward Pass: Calculate what the network thinks right now
   feedforward_2layer(sample, sigmoid, weights_ih, weights_ho, h_activations, activations, units);
@@ -341,7 +340,6 @@ int classify_2layer(double sample[INPUTS], int label, double (*sigmoid)(double i
   feedforward_2layer(sample, sigmoid, weights_ih, weights_ho, h_activations, activations, units);
   int max_index = max_activation(activations);
   return max_index;
-
 }
 
 void feedforward_2layer(double sample[INPUTS], double (*sigmoid)(double input), double weights_ih[INPUTS][MAX_HIDDEN], double weights_ho[MAX_HIDDEN][OUTPUTS], double h_activations[MAX_HIDDEN], double activations[OUTPUTS], int units)
@@ -468,7 +466,7 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
   double target_values[OUTPUTS];
   for (int j = 0; j < OUTPUTS; j++)
   {
-    if(sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
+    if (sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
     {
       target_values[j] = (j == label) ? 1.0 : 0.0;
     }
@@ -484,41 +482,58 @@ void backprop_2layer(double sample[INPUTS], double h_activations[MAX_HIDDEN], do
   {
     error[j] = target_values[j] - activations[j]; // Error for neuron j
   }
-
-  // --- STEP 2: Calculate Hidden Layer Deltas ---
+  // compute output delta
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    double derivative;
+    if (sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
+    {
+      derivative = (activations[j]) * (1.0 - activations[j]);
+    }
+    else // Tanh
+    {
+      derivative = (1.0 - activations[j] * activations[j]);
+    }
+    delta_o[j] = error[j] * derivative;
+  }
+  // Neow i compute the delta for hidden layer
   for (int i = 0; i < units; i++)
   {
     double error_sum = 0;
     for (int j = 0; j < OUTPUTS; j++)
     {
-      // We use the OLD weights to see how much this hidden unit contributed to the error
       error_sum += delta_o[j] * weights_ho[i][j];
     }
-    double deriv_h = (sigmoid_zero == 0.0) ? (1.0 - h_activations[i] * h_activations[i]) : (h_activations[i] * (1.0 - h_activations[i]));
-    
-    delta_h[i] = error_sum * deriv_h;
+    double derivative;
+    if (sigmoid_zero_output > 0.4 && sigmoid_zero_output < 0.6) // Check if it's roughly 0.5
+    {
+      derivative = h_activations[i] * (1.0 - h_activations[i]);
+    }
+    else // Tanh
+    {
+      derivative = (1.0 - h_activations[i] * h_activations[i]);
+    }
+    delta_h[i] = error_sum * derivative;
   }
-
-  // --- STEP 3: Update Weights (Hidden to Output) ---
+  // Now I have the deltas for both layers, I can update the weights
+  // Update weights from hidden to output layer
+  for (int j = 0; j < OUTPUTS; j++)
+  {
+    for (int i = 0; i < units; i++)
+    {
+      double delta_w = ALPHA * delta_o[j] * h_activations[i];
+      weights_ho[i][j] += delta_w;
+    }
+  }
+  // Update weights from input to hidden layer
   for (int i = 0; i < units; i++)
   {
-    for (int j = 0; j < OUTPUTS; j++)
+    for (int k = 0; k < INPUTS; k++)
     {
-      // Input here is the hidden activation
-      weights_ho[i][j] += ALPHA * delta_o[j] * h_activations[i];
+      double delta_w = ALPHA * delta_h[i] * sample[k];
+      weights_ih[k][i] += delta_w;
     }
   }
-
-  // --- STEP 4: Update Weights (Input to Hidden) ---
-  for (int i = 0; i < INPUTS; i++)
-  {
-    for (int j = 0; j < units; j++)
-    {
-      // Input here is the raw pixel (sample)
-      weights_ih[i][j] += ALPHA * delta_h[j] * sample[i];
-    }
-  }
-
 }
 
 double logistic(double input)
